@@ -109,9 +109,9 @@ browser1="firefox"
 -- However, you can use another modifier like Mod1, but it may interact with others.
 modkey = "Mod4"
 
-lain.layout.termfair.nmaster = 3
+lain.layout.termfair.nmaster = 2
 lain.layout.termfair.ncol = 1
-lain.layout.centerfair.nmaster = 3
+lain.layout.centerfair.nmaster = 2
 lain.layout.centerfair.ncol = 1
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
@@ -237,7 +237,7 @@ mypomo_img:set_resize (true)
 
 -- Mail updater
 mailconf = '/home/dccf87/.config/mail_servers.conf'
-mails = { Gmail = {id = 'Gmail', file='/home/dccf87/.gunread', cnt=0},
+local mails = { Gmail = {id = 'Gmail', file='/home/dccf87/.gunread', cnt=0},
           Durham = {id = 'Durham', file='/home/dccf87/.dunread', cnt=0},
           Icloud = {id = 'Icloud', file='/home/dccf87/.munread', cnt=0},
           AIP = {id = 'AIP', file='/home/dccf87/.aunread', cnt=0}}
@@ -1074,7 +1074,7 @@ mail_timer:connect_signal("timeout", function()
         fg:close()
 
         t.wibox:set_markup(l)
-        os.execute("unread.py  "..mailconf.." "..t.id.." > "..t.file)
+        os.execute("unread.py "..mailconf.." "..t.id.." > "..t.file .. " &")
     end
     os.execute("myip > ~/Dropbox/myip.txt &")
 end)
