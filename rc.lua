@@ -3,42 +3,47 @@ local gears = require("gears")
 local awful = require("awful")
 awful.rules = require("awful.rules")
 require("awful.autofocus")
+
 -- Widget and layout library
 local wibox = require("wibox")
+local lain = require("lain")
+
 -- Theme handling library
 local beautiful = require("beautiful")
+
 -- Notification library
 local naughty = require("naughty")
+
+-- Menubar
 local menubar = require ("menubar")
-local lain = require("lain")
 menubar.cache_entries = true
 menubar.app_folders = { "/usr/share/applications/" }
 menubar.show_categories = true
 
 require ("eminent")
 require ("hints")
-require("keychains")
+local keychains = require("keychains")
 local revelation=require("revelation")
-local lognotify=require("lognotify")
+--local lognotify=require("lognotify")
 --local dmenu=require("dmenu")
 local drop = require("scratchdrop")
 
 --require("aweror")
 --require("shifty")
 
-
-ilog = lognotify{
-    logs = { pacman = { file = "/var/log/pacman.log"},
-    -- Check, whether you have the permissions to read your log files!
-    -- You can fix this by configure syslog deamon in many case.
-    syslog = { file = "/var/log/dmesg.log", ignore = { "Changing fan level" }}
-    },
-   -- Delay between checking in seconds. Default: 1
-   interval = 1,
-   -- Time in seconds after which popup expires. Set 0 for no timeout. Default: 0
-   naughty_timeout = 25
-}
-
+--{{{ currently not useful
+--ilog = lognotify{
+    --logs = { pacman = { file = "/var/log/pacman.log"},
+    ---- Check, whether you have the permissions to read your log files!
+    ---- You can fix this by configure syslog deamon in many case.
+    --syslog = { file = "/var/log/dmesg.log", ignore = { "Changing fan level" }}
+    --},
+   ---- Delay between checking in seconds. Default: 1
+   --interval = 1,
+   ---- Time in seconds after which popup expires. Set 0 for no timeout. Default: 0
+   --naughty_timeout = 25
+--}
+--}}}
 
 
 -- {{{ Error handling
@@ -82,7 +87,8 @@ hints.init()
 
 -- This is used later as the default terminal and editor to run.
 --terminal = "lxterminal"
-terminal = "lilyterm"
+--terminal = "lilyterm"
+terminal = "terminator"
 --terminal = "xfce-terminal"
 editor = os.getenv("EDITOR") or "gvim"
 editor_cmd = terminal .. " -e " .. editor
@@ -107,6 +113,7 @@ browser1="firefox"
 -- If you do not like this or do not have such a key,
 -- I suggest you to remap Mod4 to another key using xmodmap or other tools.
 -- However, you can use another modifier like Mod1, but it may interact with others.
+
 modkey = "Mod4"
 
 lain.layout.termfair.nmaster = 2
@@ -128,7 +135,7 @@ layouts =
     --awful.layout.suit.spiral.dwindle,
     --awful.layout.suit.max,
     --awful.layout.suit.max.fullscreen,
-    --awful.layout.suit.magnifier
+    awful.layout.suit.magnifier,
     lain.layout.uselessfair.horizontal,
     lain.layout.uselesstile,
     lain.layout.uselessfair,
@@ -153,7 +160,7 @@ end
  tags = {
    names  = { "1:work", "2:term", "3:www", "4:view", "5", 6, "7:mail", 8,"9:sys"},
    layout = { layouts[2], layouts[2], layouts[1], layouts[7], layouts[2],
-              layouts[2], layouts[2], layouts[2], layouts[1]
+              layouts[2], layouts[2], layouts[2], layouts[4]
  }}
 
 for s = 1, screen.count() do
@@ -477,7 +484,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, }, "Right",  awful.tag.viewnext       ),
     awful.key({ modkey, }, "Escape", awful.tag.history.restore),
     awful.key({ modkey,           }, "a", function() 
-                            revelation({class="conky-semi"}, true) 
+                                revelation({rule={class="conky-semi"}, is_excluded=true, curr_tag_only=true}) 
                              end),
     awful.key({            }, "F12", function () awful.util.spawn_with_shell("wacom_led_select", mouse.screen) end),
 
@@ -952,7 +959,7 @@ awful.rules.rules = {
       end},
     { rule = { name = "Windows7" },properties={maximized_horizontal=true,maximized_vertical=true}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
       end},
-    { rule = { name = "Windows8" },properties={maximized_horizontal=true,maximized_vertical=true}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
+    { rule = { name = "Windows8" },properties={},callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
       end},
      { rule = { class = "Tilda" },
        properties = {maximized_horizontal=false,maximized_vertical=false,floating=true},
@@ -1293,11 +1300,10 @@ end
 function test_match()
     local clientlist = awful.client.visible()
     for i,thisclient in pairs(clientlist) do 
-        x = awful.rules.match(thisclient, {class="conky-semi", exclude=true})
-        debuginfo(thisclient.class)
-        debuginfo(tostring(thisclient.exclude))
+        --x = awful.rules.match
+        x = awful.rules.match(thisclient, {class="Firefox"}, true)
         debuginfo(tostring(x))
     end
 end
 
-ilog:start()
+--ilog:start()
