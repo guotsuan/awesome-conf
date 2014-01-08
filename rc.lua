@@ -24,14 +24,27 @@ require ("eminent")
 require ("hints")
 local keychains = require("keychains")
 local revelation=require("revelation")
+local drop = require("scratchdrop")
+--local treesome = require("treesome")
+
+
+function debuginfo( message )
+    if type(message) == "table" then
+        for k,v in pairs(message) do 
+            naughty.notify({ text = "key: "..k.." value: "..tostring(message), timeout = 10 })
+        end
+    else 
+        nid = naughty.notify({ text = message, timeout = 10 })
+    end
+end
+
+--{{{ current not used
 --local lognotify=require("lognotify")
 --local dmenu=require("dmenu")
-local drop = require("scratchdrop")
-
 --require("aweror")
 --require("shifty")
 
---{{{ currently not useful
+--local lognotify=require("lognotify")
 --ilog = lognotify{
     --logs = { pacman = { file = "/var/log/pacman.log"},
     ---- Check, whether you have the permissions to read your log files!
@@ -44,7 +57,6 @@ local drop = require("scratchdrop")
    --naughty_timeout = 25
 --}
 --}}}
-
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -72,15 +84,31 @@ end
 -- }}}
 
 -- {{{ Variable definitions
--- Themes define colours, icons, and wallpapers
---beautiful.init("/home/dccf87/.config/awesome/themes/Darklooks/theme.lua")
---beautiful.init("/usr/share/awesome/themes/brown/theme.lua")
+-- set locale
 os.setlocale(os.getenv("LANG"))
 
+-- Themes define colours, icons, and wallpapers
+--
+--beautiful.init("/home/dccf87/.config/awesome/themes/Darklooks/theme.lua")
+--beautiful.init("/usr/share/awesome/themes/brown/theme.lua")
 --beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 --beautiful.init(os.getenv("HOME").."/.config/awesome/themes/powerarrow-darker/theme.lua")
-beautiful.init(os.getenv("HOME").."/.config/awesome/themes/zenburn-custom/theme.lua")
---beautiful.init("/usr/share/awesome/themes/zenburn-custom/theme.lua")
+beautiful.init("/usr/share/awesome/themes/zenburn-custom/theme.lua")
+--
+--beautiful.init(os.getenv("HOME").."/.config/awesome/themes/zenburn-custom/theme.lua")
+theme.font = "sans 8"
+theme.lain_icons         = os.getenv("HOME") .. "/.config/awesome/lain/icons/layout/zenburn/"
+theme.layout_termfair    = theme.lain_icons .. "termfair.png"
+theme.layout_cascade     = theme.lain_icons .. "cascade.png"
+theme.layout_cascadetile = theme.lain_icons .. "cascadebrowse.png"
+theme.layout_centerwork  = theme.lain_icons .. "centerwork.png"
+theme.layout_centerfair  = theme.lain_icons .. "centerfair.png"
+theme.awful_widget_height           = 14
+theme.awful_widget_margin_top       = 2
+theme.tasklist_disable_icon         = false
+theme.tasklist_floating             = ""
+theme.tasklist_maximized_horizontal = ""
+theme.tasklist_maximized_vertical   = ""
 
 revelation.init()
 hints.init()
@@ -122,26 +150,27 @@ lain.layout.centerfair.nmaster = 2
 lain.layout.centerfair.ncol = 1
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
-layouts =
-{
+--
+    --lain.layout.uselessfair.horizontal,
+    --lain.layout.uselesstile,
+    --lain.layout.uselessfair,
+    --lain.layout.uselesspiral.dwindle,
+layouts = {
     awful.layout.suit.floating,
     awful.layout.suit.tile,
-    --awful.layout.suit.tile.left,
-    --awful.layout.suit.tile.bottom,
-    --awful.layout.suit.tile.top,
     awful.layout.suit.fair,
-    --awful.layout.suit.fair.horizontal,
-    --awful.layout.suit.spiral,
-    --awful.layout.suit.spiral.dwindle,
-    --awful.layout.suit.max,
-    --awful.layout.suit.max.fullscreen,
     awful.layout.suit.magnifier,
-    lain.layout.uselessfair.horizontal,
-    lain.layout.uselesstile,
-    lain.layout.uselessfair,
     lain.layout.termfair,
     lain.layout.centerfair,
-    lain.layout.uselesspiral.dwindle
+    awful.layout.suit.tile.left,
+    awful.layout.suit.tile.bottom,
+    awful.layout.suit.tile.top,
+    awful.layout.suit.fair.horizontal,
+    awful.layout.suit.spiral,
+    awful.layout.suit.spiral.dwindle,
+    awful.layout.suit.max,
+    awful.layout.suit.max.fullscreen,
+
 }
 --}}}
 
@@ -193,16 +222,18 @@ menubar.utils.terminal = "xterm" -- Set the terminal for applications that requi
 -- }}}
 
 -- {{{ Wibox
+
+markup = lain.util.markup
+
 -- Create a textclock widget
 mytextclock = awful.widget.textclock("%a %b %d, %H:%M")
 
--- orglendar
+-- Create orglendar
 local orglendar = require('orglendar')
 orglendar.files = {"/home/dccf87/org/work.org",
                    "/home/dccf87/org/home.org"}
+orglendar.calendar_width = 23
 orglendar.register(mytextclock)
-
-markup = lain.util.markup
 
 -- creat pomodoro widget
 
@@ -232,7 +263,6 @@ mypomo_margin:set_bottom(4)
 mypomo_widget = wibox.widget.background(mypomo_margin)
 mypomo_widget:set_bgimage(beautiful.widget_bg)
 
-
 mypomo_tooltip = awful.tooltip({objects = {mypomo}})
 
 local pomodoro_image_path = awful.util.getdir("config") .. "/pomodoro_icon.png"
@@ -241,8 +271,7 @@ mypomo_img = wibox.widget.imagebox()
 mypomo_img:set_image(pomodoro_image_path)
 mypomo_img:set_resize (true)
 
-
--- Mail updater
+-- Create Mail updater
 mailconf = '/home/dccf87/.config/mail_servers.conf'
 local mails = { Gmail = {id = 'Gmail', file='/home/dccf87/.gunread', cnt=0},
           Durham = {id = 'Durham', file='/home/dccf87/.dunread', cnt=0},
@@ -255,7 +284,8 @@ for k, t in pairs(mails) do
     t.wibox:set_text(k.."  ?  ")
     mailhoover.addToWidget(t.wibox, t.file, t.id)
 end
--- Weather widget
+
+-- Create Weather widget
 yawn = lain.widgets.yawn(685783)
 
  --Alsa volume--{{{
@@ -334,14 +364,10 @@ mytimer:connect_signal("timeout", function ()
     update_volume(vol, 'Vol:')
     update_volume(mc12, 'MC12:')
 end)
---mytimer:stop()
+
 mytimer:start()
 
 ------}}}
-
-
-
-
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -484,7 +510,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, }, "Right",  awful.tag.viewnext       ),
     awful.key({ modkey, }, "Escape", awful.tag.history.restore),
     awful.key({ modkey,           }, "a", function() 
-                                revelation({rule={class="conky-semi"}, is_excluded=true, curr_tag_only=true}) 
+                                revelation({rule={class="conky-semi"}, is_excluded=true}) 
                              end),
     awful.key({            }, "F12", function () awful.util.spawn_with_shell("wacom_led_select", mouse.screen) end),
 
@@ -529,6 +555,8 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "k", function () awful.client.moveresize(0, 20,0,0)    end),
     awful.key({ modkey, "Shift"   }, "h", function () awful.client.moveresize(-20,0,0,0) end),
     awful.key({ modkey, "Shift"   }, "l", function () awful.client.moveresize(20,0,0,0)    end),
+    --awful.key({ modkey }, "v", treesome.vertical),
+    --awful.key({ modkey }, "s", treesome.horizontal),
 
 
     awful.key({ modkey, "Control"   }, "h", function ()
@@ -551,8 +579,9 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control"   }, "k", function () awful.client.moveresize(0,0,0,-20)    end),
     -- no two screen yet  --gq
     --  no I have two screen
-    awful.key({ modkey,  }, "[", function () awful.screen.focus(1) end),
-    awful.key({ modkey,  }, "]", function () awful.screen.focus(2) end),
+    awful.key({ modkey,  }, "[", function() awful.screen.focus_relative(-1)
+                               end),
+    awful.key({ modkey,  }, "]", function() awful.screen.focus_relative(1) end),
     --awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end),
     awful.key({ modkey,           }, "u", awful.client.urgent.jumpto),
     awful.key({ modkey,           }, "Tab",
@@ -576,8 +605,21 @@ globalkeys = awful.util.table.join(
     --
     --awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end),
     --awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
-    awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end),
-    awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
+    awful.key({ modkey,           }, "space", 
+        function () awful.layout.inc(layouts,  1)
+            local layout = awful.layout.get(mouse.screen)
+            local name = awful.layout.getname(layout)
+            naughty.notify({text = '<span font_desc="Monaco 10">'..name..'</span>',
+                            title = "current layout:", timeout=8,
+                           screen=mouse.screen})
+        end),
+    awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1)
+            local layout = awful.layout.get(mouse.screen)
+            local name = awful.layout.getname(layout)
+            naughty.notify({text = '<span font_desc="Monaco 10">'..name..'</span>',
+                            title = "current layout:", timeout=8,
+                           screen=mouse.screen})
+    end),
 
     awful.key({ modkey, "Control" }, "n", awful.client.restore),
 
@@ -586,7 +628,7 @@ globalkeys = awful.util.table.join(
     awful.util.spawn_with_shell("dmenu_run -i -p 'Run command:' -nb '" .. 
                 beautiful.bg_normal .. "' -nf '" .. beautiful.fg_normal .. 
                 "' -sb '" .. beautiful.bg_focus .. 
-                "' -sf '" .. beautiful.fg_focus .. "'") 
+                "' -sf '" .. beautiful.fg_focus .. "'", mouse.screen) 
         end),
     --usefuleval, nil,
     awful.key({ modkey }, "x",
@@ -886,6 +928,7 @@ keychains.add({modkey, }, "z", "Switch to Tag", "", {
 --no need because that the keychinas.init will do it
 --root.keys(globalkeys)
 -- }}}
+
 keychains.start(15)
 
 -- {{{ Rules
@@ -959,7 +1002,7 @@ awful.rules.rules = {
       end},
     { rule = { name = "Windows7" },properties={maximized_horizontal=true,maximized_vertical=true}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
       end},
-    { rule = { name = "Windows8" },properties={},callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
+    { rule = { name = "Windows8" },properties={maximized_horizontal=true,maximized_vertical=true},callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
       end},
      { rule = { class = "Tilda" },
        properties = {maximized_horizontal=false,maximized_vertical=false,floating=true},
@@ -978,7 +1021,7 @@ awful.rules.rules = {
                      ontop = false,
                      focusable = false,
                      hidden = true,
-                     size_hints = {"program_position", "program_size"}
+                     --size_hints = {"program_position", "program_size"}
                      },
     },
      { rule = { name = "gqpc" },
@@ -1003,6 +1046,14 @@ client.connect_signal("manage", function (c, startup)
             client.focus = c
         end
     end)
+
+    c:connect_signal("mouse::leave", function(c)
+        c.focus = false
+    end)
+
+    if awful.layout.get(c.screen) == awful.layout.suit.floating then
+        awful.client.floating.set(c, true)
+    end
 
     if not startup then
         -- Set the windows at the slave,
@@ -1173,7 +1224,6 @@ end
 
 --}}}
 --
-
 function add_titlebar(c) --{{{
     local left_layout = wibox.layout.fixed.horizontal()
     left_layout:add(awful.titlebar.widget.iconwidget(c))
@@ -1212,20 +1262,11 @@ end
 
 --}}}
 
---{{{ pomodoro functions
---
---local pomodoro_work_time = 60 * 30
---local pomodoro_rest_time = 60 * 5
-
---local pomo_timer = timer({timout = pomodoro_work_time})
-
---function pomodoro_star()
---}}}
  --{{{Auto Spawn
 awful.util.spawn_with_shell("/home/dccf87/.scripts/get_dbus.sh")
 awful.util.spawn_with_shell("/home/dccf87/bin/setcolor")
 --run_once("guake", nil, "/usr/bin/python2 /usr/bin/guake")
-run_once("offlineimap", nil, "/usr/bin/python2 /usr/bin/offlineimap")
+--run_once("offlineimap", nil, "/usr/bin/python2 /usr/bin/offlineimap")
 
 -- replaced by systemd
 --run_once("devmon","> ~/.devmon.log 2>&1", "/bin/bash /usr/bin/devmon")
@@ -1286,16 +1327,52 @@ function usefuleval(s)--{{{
         end
 end--}}}
 
+-- scan directory, and optionally filter outputs
+function scandir(directory, filter)
+    local i, t, popen = 0, {}, io.popen
+    if not filter then
+        filter = function(s) return true end
+    end
+    print(filter)
+    for filename in popen('ls -a "'..directory..'"'):lines() do
+        if filter(filename) then
+            i = i + 1
+            t[i] = filename
+        end
+    end
+    return t
+end
+homedir = os.getenv("HOME")
+wp_index = {}
+wp_timeout  = 600
+wp_path = homedir.."/.config/wallpapers/"
+wp_filter = function(s) return string.match(s,"%.png$") or string.match(s,"%.jpg$") end
+wp_files = scandir(wp_path, wp_filter)
+ 
+-- setup the timer
+local wp_timer = timer { timeout = wp_timeout }
+wp_timer:connect_signal("timeout", function()
+ 
+  -- set wallpaper to current index for all screens
+  for s = 1, screen.count() do
+     wp_index[s] = math.random( 1, #wp_files)
+    gears.wallpaper.maximized(wp_path .. wp_files[wp_index[s]], s)
+  end
+ 
+  --restart the timer
+  --s.getenv("HOME")os.getenv("HOME")os.getenv("HOME")
+  wp_timer.timeout = wp_timeout
+  wp_timer:start()
+end)
+ 
+-- initial start when rc.lua is first run
+wp_timer:start()
 
-os.execute("feh --bg-fill -z -r ~/.config/wallpapers &")
+-- }}}
+--os.execute("feh --bg-fill -z -r ~/.config/wallpapers &")
 
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
-
-
-function debuginfo( message )
-    nid = naughty.notify({ text = message, timeout = 10 })
-end
 
 function test_match()
     local clientlist = awful.client.visible()
@@ -1306,4 +1383,3 @@ function test_match()
     end
 end
 
---ilog:start()
