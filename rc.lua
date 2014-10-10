@@ -96,19 +96,19 @@ os.setlocale(os.getenv("LANG"))
 beautiful.init("/usr/share/awesome/themes/zenburn-custom/theme.lua")
 --
 --beautiful.init(os.getenv("HOME").."/.config/awesome/themes/zenburn-custom/theme.lua")
-theme.font = "sans 8"
+theme.font = "Sans 9"
 theme.lain_icons         = os.getenv("HOME") .. "/.config/awesome/lain/icons/layout/zenburn/"
 theme.layout_termfair    = theme.lain_icons .. "termfair.png"
 theme.layout_cascade     = theme.lain_icons .. "cascade.png"
 theme.layout_cascadetile = theme.lain_icons .. "cascadebrowse.png"
 theme.layout_centerwork  = theme.lain_icons .. "centerwork.png"
 theme.layout_centerfair  = theme.lain_icons .. "centerfair.png"
-theme.awful_widget_height           = 14
+theme.awful_widget_height           = 18
 theme.awful_widget_margin_top       = 2
-theme.tasklist_disable_icon         = false
-theme.tasklist_floating             = ""
-theme.tasklist_maximized_horizontal = ""
-theme.tasklist_maximized_vertical   = ""
+--theme.tasklist_disable_icon         = false
+--theme.tasklist_floating             = ""
+--theme.tasklist_maximized_horizontal = ""
+--theme.tasklist_maximized_vertical   = ""
 
 revelation.init()
 hints.init()
@@ -155,7 +155,7 @@ lain.layout.centerfair.ncol = 1
     --lain.layout.uselesstile,
     --lain.layout.uselessfair,
     --lain.layout.uselesspiral.dwindle,
-layouts = {
+local layouts = {
     awful.layout.suit.floating,
     awful.layout.suit.tile,
     awful.layout.suit.fair,
@@ -187,10 +187,10 @@ end
 
 -- old tags
  tags = {
-   names  = { "1:work", "2:term", "3:www", "4:view", "5", 6, "7:mail", 8,"9:sys"},
-   layout = { layouts[2], layouts[2], layouts[1], layouts[7], layouts[2],
-              layouts[2], layouts[2], layouts[2], layouts[4]
- }}
+   names  = { " 1 "," 2 "," 3 "," 4 "," 5 ", " 6 "," 7 "," 8:vbox","9:www" },
+   layout = { layouts[2], layouts[2], layouts[2], layouts[7], layouts[2],
+              layouts[2], layouts[2], layouts[2], layouts[1] }
+}
 
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
@@ -227,12 +227,13 @@ markup = lain.util.markup
 
 -- Create a textclock widget
 mytextclock = awful.widget.textclock("%a %b %d, %H:%M")
+--mytextclock = awful.widget.textclock()
 
 -- Create orglendar
 local orglendar = require('orglendar')
 orglendar.files = {"/home/dccf87/org/work.org",
                    "/home/dccf87/org/home.org"}
-orglendar.calendar_width = 23
+orglendar.calendar_width = 25
 orglendar.register(mytextclock)
 
 -- creat pomodoro widget
@@ -357,12 +358,12 @@ function update_volume(widget, header)
 end
  
 update_volume(vol, 'Vol:')
-update_volume(mc12, 'MC12:')
+--update_volume(mc12, 'MC12:')
 
 local mytimer = timer({ timeout = 5.0 })
 mytimer:connect_signal("timeout", function () 
     update_volume(vol, 'Vol:')
-    update_volume(mc12, 'MC12:')
+    --update_volume(mc12, 'MC12:')
 end)
 
 mytimer:start()
@@ -479,12 +480,40 @@ for s = 1, screen.count() do
 end
 -- }}}
 
+main = {wibox = vol,
+    mixer = "xterm -e alsamixer",
+    header = 'Vol:',
+     card = "-c 0",
+  channel = "Master",
+     step = "5%" }
+
+
+function vol_up(cin)
+    debuginfo('up')
+    awful.util.spawn_with_shell(string.format("amixer %s set %s %s+", 
+        cin.card, cin.channel, cin.step))
+    update_volume(cin.wibox, cin.header)
+end
+
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
     awful.button({ }, 3, function () mymainmenu:toggle() end),
     awful.button({ }, 4, awful.tag.viewnext),
-    awful.button({ }, 5, awful.tag.viewprev)
+    awful.button({ }, 5, awful.tag.viewprev),
+    awful.button({ }, 10, function ()
+        debuginfo('Volume up')
+        awful.util.spawn_with_shell(string.format("amixer %s set %s %s-", 
+            main.card, main.channel, main.step))
+        update_volume(main.wibox, main.header)
+    end),
+    awful.button({ }, 11, function ()
+        debuginfo('Volume down')
+        awful.util.spawn_with_shell(string.format("amixer %s set %s %s-", 
+            main.card, main.channel, main.step))
+        update_volume(main.wibox, main.header)
+    end)
 ))
+
 -- }}}
 
 -- {{{ Key bindings
@@ -516,13 +545,27 @@ globalkeys = awful.util.table.join(
 
 
     awful.key({ modkey }, "`",
-        function () drop(terminal)  end),
+        function () drop(terminal,'top','center',0.7,0.7, true)  end),
 
     --awful.key({ modkey }, "`",
         --function () quakeconsole[mouse.screen]:toggle() end),
 
     awful.key({modkey, }, "e",
          function () hints.focus() end),
+
+    awful.key({modkey, }, "Next", function ()
+        debuginfo('Volume down')
+        awful.util.spawn_with_shell(string.format("amixer %s set %s %s-", 
+            main.card, main.channel, main.step))
+        update_volume(main.wibox, main.header)
+    end),
+
+    awful.key({modkey, }, "Prior", function ()
+        debuginfo('Volume up')
+        awful.util.spawn_with_shell(string.format("amixer %s set %s %s+", 
+            main.card, main.channel, main.step))
+        update_volume(main.wibox, main.header)
+    end),
 
     awful.key({ modkey,           }, "j",
        --add by gq
@@ -555,8 +598,8 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "k", function () awful.client.moveresize(0, 20,0,0)    end),
     awful.key({ modkey, "Shift"   }, "h", function () awful.client.moveresize(-20,0,0,0) end),
     awful.key({ modkey, "Shift"   }, "l", function () awful.client.moveresize(20,0,0,0)    end),
-    --awful.key({ modkey }, "v", treesome.vertical),
-    --awful.key({ modkey }, "s", treesome.horizontal),
+
+    awful.key({modkey,}, "s", function () awful.util.spawn_with_shell("dmenu_apps.sh") end ),
 
 
     awful.key({ modkey, "Control"   }, "h", function ()
@@ -625,7 +668,8 @@ globalkeys = awful.util.table.join(
 
     -- Prompt
     awful.key({ modkey },            "r",     function ()
-    awful.util.spawn_with_shell("dmenu_run -i -p 'Run command:' -nb '" .. 
+        local s = 
+        awful.util.spawn_with_shell("dmenu_run -i -p 'Run command:' -nb '" .. 
                 beautiful.bg_normal .. "' -nf '" .. beautiful.fg_normal .. 
                 "' -sb '" .. beautiful.bg_focus .. 
                 "' -sf '" .. beautiful.fg_focus .. "'", mouse.screen) 
@@ -737,34 +781,39 @@ end
 -- Bind all key numbers to tags.
 -- Be careful: we use keycodes to make it works on any keyboard layout.
 -- This should map on the top row of your keyboard, usually 1 to 9.
-for i = 1, keynumber do
+for i = 1, 9 do
     globalkeys = awful.util.table.join(globalkeys,
         awful.key({ modkey }, "#" .. i + 9,
                   function ()
                         local screen = mouse.screen
-                        --awful.tag.viewidx(i)
-                        if tags[screen][i] then
-                            awful.tag.viewonly(tags[screen][i])
+                        local tag = awful.tag.gettags(screen)[i]
+                        if tag then
+                           awful.tag.viewonly(tag)
                         end
                   end),
 
         awful.key({ modkey, "Control" }, "#" .. i + 9,
                   function ()
                       local screen = mouse.screen
-                      if tags[screen][i] then
-                          awful.tag.viewtoggle(tags[screen][i])
+                      local tag = awful.tag.gettags(screen)[i]
+                      if tag then
+                         awful.tag.viewtoggle(tag)
                       end
                   end),
         awful.key({ modkey, "Shift" }, "#" .. i + 9,
                   function ()
-                      if client.focus and tags[client.focus.screen][i] then
-                          awful.client.movetotag(tags[client.focus.screen][i])
+                      local tag = awful.tag.gettags(client.focus.screen)[i]
+                      if tag then
+                          awful.client.movetotag(tag)
                       end
                   end),
         awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
                   function ()
-                      if client.focus and tags[client.focus.screen][i] then
-                          awful.client.toggletag(tags[client.focus.screen][i])
+                      if client.focus then
+                          local tag = awful.tag.gettags(client.focus.screen)[i]
+                          if tag then
+                              awful.client.toggletag(tag)
+                          end
                       end
                   end))
 
@@ -819,6 +868,13 @@ keychains.add({modkey, "Shift"},"w","Web pages","/usr/share/icons/hicolor/16x16/
                 open_url("http://translate.google.com/")
             end,
             info    =   "Google translation"
+        },
+
+        f   =   {
+            func = function()
+                open_url("http://www.forvo.com/")
+            end,
+            info    =   "Forvo"
         }
     })
 
@@ -952,11 +1008,16 @@ awful.rules.rules = {
         },
     { rule = { class = "MPlayer" },
       properties = { floating = true } },
+    { rule = { class = "sun-awt-X11-XFramePeer"},
+      properties = { floating = true}},
     { rule = { class = "pinentry" },
       properties = { floating = true } },
     { rule = { class = "Gimp" },
       properties = { floating = true } },
-
+    { rule = { class = "jetbrains-pycharm" },
+      properties = { floating = true } },
+    { rule = { class = "xpad" },
+      properties = { floating = true } },
       { rule = { class = "Display" },
       properties = { floating = true } },
 
@@ -968,8 +1029,9 @@ awful.rules.rules = {
     -- Set Firefox to always map on tags number 2 of screen 1.
      { rule = { class = "Firefox" },
        properties = {maximized_horizontal=false,maximized_vertical=false,floating=true},
-       callback= function(c) awful.client.movetotag(tags[mouse.screen][3],c) 
-            awful.tag.viewonly(tags[mouse.screen][3])
+       callback= function(c) awful.screen.focus(mouse.screen)
+           awful.client.movetotag(tags[mouse.screen][9],c) 
+            awful.tag.viewonly(tags[mouse.screen][9])
        end},
 
      { rule = { name = "Figure" },
@@ -996,8 +1058,10 @@ awful.rules.rules = {
         focus=true},
         callback=function(c) add_titlebar(c) end
       },
-    { rule = { type = "dialog"}, properties={}, 
-        callback=function(c) add_titlebar(c) end},
+    --{ rule = { type = "dialog"}, properties={}, 
+        --callback=function(c) add_titlebar(c) end},
+    { rule = { type = "dialog"}, properties={border_width = 0}},
+
     { rule = { class = "VirtualBox" },properties={}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
       end},
     { rule = { name = "Windows7" },properties={maximized_horizontal=true,maximized_vertical=true}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
@@ -1027,6 +1091,10 @@ awful.rules.rules = {
      { rule = { name = "gqpc" },
        properties = {maximized_horizontal=false,maximized_vertical=false,floating=true},
     },
+
+     { rule = { class = "Synapse" },
+       properties = {border_width = 0},
+    },
      { rule = { name = "PS3 Media Server" },
        properties = {maximized_horizontal=false,maximized_vertical=false,floating=true,
       tag=tags[1][9]},
@@ -1047,9 +1115,9 @@ client.connect_signal("manage", function (c, startup)
         end
     end)
 
-    c:connect_signal("mouse::leave", function(c)
-        c.focus = false
-    end)
+    --c:connect_signal("mouse::leave", function(c)
+        --c.focus = false
+    --end)
 
     if awful.layout.get(c.screen) == awful.layout.suit.floating then
         awful.client.floating.set(c, true)
@@ -1107,7 +1175,7 @@ client.connect_signal("manage", function (c, startup)
     end--}}}
 end)
 --{{{ mail updater
-local mail_timer = timer({timeout = 60.0})
+local mail_timer = timer({timeout = 120.0})
 mail_timer:connect_signal("timeout", function()
     for k,t in pairs(mails) do 
         local fg = io.open(t.file)
@@ -1132,9 +1200,8 @@ mail_timer:connect_signal("timeout", function()
         fg:close()
 
         t.wibox:set_markup(l)
-        os.execute("unread.py "..mailconf.." "..t.id.." > "..t.file .. " &")
+        awful.util.spawn_with_shell("unread.py "..mailconf.." "..t.id.." > "..t.file .. " &")
     end
-    os.execute("myip > ~/Dropbox/myip.txt &")
 end)
 
 --mail_timer:stop()
@@ -1265,21 +1332,10 @@ end
  --{{{Auto Spawn
 awful.util.spawn_with_shell("/home/dccf87/.scripts/get_dbus.sh")
 awful.util.spawn_with_shell("/home/dccf87/bin/setcolor")
---run_once("guake", nil, "/usr/bin/python2 /usr/bin/guake")
---run_once("offlineimap", nil, "/usr/bin/python2 /usr/bin/offlineimap")
 
 -- replaced by systemd
---run_once("devmon","> ~/.devmon.log 2>&1", "/bin/bash /usr/bin/devmon")
 run_once("fcitx")
 run_once("clipit")
---run_once("dropboxd",nil, "/opt/dropbox/dropbox")
---run_once("conky -c /home/dccf87/.config/conky/conkyrc_grey")
---run_cone("conky -c /home/dccf87/.config/conky/conkyrc_grey")
---run_once("conky -c /home/dccf87/.config/conky/conkyrc2")
---run_once("emacs", "--daemon", "emacs --daemon")
---run_once("eamcs", "--daemon --with-x-toolkit=luci", "emacs --daemon --with-x-toolkit=luci")
---run_once_bg("dropboxd", "dropbox")
---run_once_bg("emacs-daemon", "emacs --daemon")
 
 -- }}}
 
@@ -1344,7 +1400,7 @@ function scandir(directory, filter)
 end
 homedir = os.getenv("HOME")
 wp_index = {}
-wp_timeout  = 600
+wp_timeout  = 3600
 wp_path = homedir.."/.config/wallpapers/"
 wp_filter = function(s) return string.match(s,"%.png$") or string.match(s,"%.jpg$") end
 wp_files = scandir(wp_path, wp_filter)
@@ -1358,15 +1414,17 @@ wp_timer:connect_signal("timeout", function()
      wp_index[s] = math.random( 1, #wp_files)
     gears.wallpaper.maximized(wp_path .. wp_files[wp_index[s]], s)
   end
- 
-  --restart the timer
-  --s.getenv("HOME")os.getenv("HOME")os.getenv("HOME")
-  wp_timer.timeout = wp_timeout
-  wp_timer:start()
+
 end)
  
 -- initial start when rc.lua is first run
-wp_timer:start()
+--wp_timer:start()
+
+if wp_timer.started then
+  wp_timer:stop()
+else
+  wp_timer:start()
+end
 
 -- }}}
 --os.execute("feh --bg-fill -z -r ~/.config/wallpapers &")
