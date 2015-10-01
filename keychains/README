@@ -1,0 +1,78 @@
+==========
+Overview
+==========
+
+A simple keychain module which allows to use keychains in awesome window
+manager.
+If you want similar functions to run you'll need like this:
+- tag change: you can bind e.g. WinKey+t to activite "tag change keychain"
+  and after you can press the hotkey of tag to change
+- open urls in web browser: WinKey+u to activite "open url keychain" and
+  after you can press your desired url's hotkey.
+
+
+==========
+Install
+==========
+
+Put keychains.lua to awesome's dir (~/.config/awesome or awesome's libdir).
+You can install on ArchLinux from AUR: https://aur.archlinux.org/packages/awesome-keychains-git/
+
+
+=============
+Basic usage
+=============
+
+First you should load "keychains" module:
+
+require("keychains")
+
+You should initialize:
+
+keychains.init(globalkeys,your_options_see_docs)
+
+You don't need call 'root.keys(globalkeys)', keychains.init does.
+
+After init you can add your keychains:
+
+    keychains.add({winkey},"c","Web pages","/icons/chromium.png",{
+        g   =   {
+            func    =   function()
+                open_url("https://mail.google.com/mail/u/0/#search/l%3Aunread")
+            end,
+            info    =   "Gmail - unread emails"
+        },
+        a   =   {
+            func    =   function()
+                open_url("http://awesome.naquadah.org/")
+            end,
+            info    =   "awesome web page"
+        },
+        w   =   {
+            func    =   function()
+                open_url("http://awesome.naquadah.org/wiki/Main_Page")
+            end,
+            info    =   "awesome wiki"
+        }
+    })
+
+With this: if you press 'winkey+c', a notify will popup and you can press
+    'g' to open your gmail
+    'a' to open awesome web page
+    'w' to open awesome wiki
+
+After you've ended to insert your keychains you'll need run:
+
+    keychains.start(5)
+
+The parameter '5' means that if you press 'winkey+c' and don't press anything,
+after 5 seconds keychain will exit. This parameter is optional, if the value
+is non-set or 0, no timeout.
+
+The keychains table can be a function which generates similar table as above.
+
+For more informations please check source code or you can use luadoc to generate
+documentation.
+
+License is GPLv2.
+

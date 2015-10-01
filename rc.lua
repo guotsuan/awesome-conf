@@ -1,15 +1,19 @@
 -- Standard awesome library
 local gears = require("gears")
 local awful = require("awful")
+local timer = require("gears.timer")
 awful.rules = require("awful.rules")
 require("awful.autofocus")
 
 -- Widget and layout library
 local wibox = require("wibox")
 local lain = require("lain")
+local treesome = require("treesome")
 
 -- Theme handling library
 local beautiful = require("beautiful")
+beautiful.init("/usr/share/awesome/themes/zenburn-custom/theme.lua")
+--theme.font = "San Francisco Text 9"
 
 -- Notification library
 local naughty = require("naughty")
@@ -20,8 +24,8 @@ menubar.cache_entries = true
 menubar.app_folders = { "/usr/share/applications/" }
 menubar.show_categories = true
 
-require ("eminent")
-require ("hints")
+--require ("eminent")
+local hints = require ("hints")
 local keychains = require("keychains")
 local revelation=require("revelation")
 local drop = require("scratchdrop")
@@ -93,10 +97,6 @@ os.setlocale(os.getenv("LANG"))
 --beautiful.init("/usr/share/awesome/themes/brown/theme.lua")
 --beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 --beautiful.init(os.getenv("HOME").."/.config/awesome/themes/powerarrow-darker/theme.lua")
-beautiful.init("/usr/share/awesome/themes/zenburn-custom/theme.lua")
---
---beautiful.init(os.getenv("HOME").."/.config/awesome/themes/zenburn-custom/theme.lua")
-theme.font = "Sans 9"
 theme.lain_icons         = os.getenv("HOME") .. "/.config/awesome/lain/icons/layout/zenburn/"
 theme.layout_termfair    = theme.lain_icons .. "termfair.png"
 theme.layout_cascade     = theme.lain_icons .. "cascade.png"
@@ -170,7 +170,7 @@ local layouts = {
     awful.layout.suit.spiral.dwindle,
     awful.layout.suit.max,
     awful.layout.suit.max.fullscreen,
-
+    treesome,
 }
 --}}}
 
@@ -187,7 +187,7 @@ end
 
 -- old tags
  tags = {
-   names  = { " 1 "," 2 "," 3 "," 4 "," 5 ", " 6 "," 7 "," 8:vbox","9:www" },
+   names  = { " 1 "," 2 "," 3 "," 4 "," 5 ", " 6 "," 7 "," 8:vbox"," 9:www" },
    layout = { layouts[2], layouts[2], layouts[2], layouts[7], layouts[2],
               layouts[2], layouts[2], layouts[2], layouts[1] }
 }
@@ -226,14 +226,14 @@ menubar.utils.terminal = "xterm" -- Set the terminal for applications that requi
 markup = lain.util.markup
 
 -- Create a textclock widget
-mytextclock = awful.widget.textclock("%a %b %d, %H:%M")
+mytextclock = awful.widget.textclock("%a %b %d, %H:%M ")
 --mytextclock = awful.widget.textclock()
 
 -- Create orglendar
 local orglendar = require('orglendar')
 orglendar.files = {"/home/dccf87/org/work.org",
                    "/home/dccf87/org/home.org"}
-orglendar.calendar_width = 25
+orglendar.calendar_width = 19
 orglendar.register(mytextclock)
 
 -- creat pomodoro widget
@@ -264,9 +264,10 @@ mypomo_margin:set_bottom(4)
 mypomo_widget = wibox.widget.background(mypomo_margin)
 mypomo_widget:set_bgimage(beautiful.widget_bg)
 
-mypomo_tooltip = awful.tooltip({objects = {mypomo}})
+mypomo_tooltip = awful.tooltip({objects = {mypomo_widget}})
+mypomo_tooltip:set_text('Stopped')
 
-local pomodoro_image_path = awful.util.getdir("config") .. "/pomodoro_icon.png"
+local pomodoro_image_path = awful.util.getdir("config") .. "icons/pomodoro_icon.png"
 
 mypomo_img = wibox.widget.imagebox()
 mypomo_img:set_image(pomodoro_image_path)
@@ -287,7 +288,7 @@ for k, t in pairs(mails) do
 end
 
 -- Create Weather widget
-yawn = lain.widgets.yawn(685783)
+--yawn = lain.widgets.yawn(685783)
 
  --Alsa volume--{{{
 ---- my volume widget
@@ -426,12 +427,13 @@ for s = 1, screen.count() do
     -- We need one layoutbox per screen.
     mylayoutbox[s] = awful.widget.layoutbox(s)
     mylayoutbox[s]:buttons(awful.util.table.join(
-                           awful.button({ }, 1, function () awful.layout.inc(layouts, 1) end),
-                           awful.button({ }, 3, function () awful.layout.inc(layouts, -1) end),
-                           awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
-                           awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)))
+                           awful.button({ }, 1, function () awful.layout.inc(1, mouse.screen, layouts) end),
+                           awful.button({ }, 3, function () awful.layout.inc(1, mouse.screen, layouts) end),
+                           awful.button({ }, 4, function () awful.layout.inc(1, mouse.screen, layouts) end),
+                           awful.button({ }, 5, function () awful.layout.inc(-1, mouse.screen, layouts) end)))
     -- Create a taglist widget
-    mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.filter.all, mytaglist.buttons)
+    -- maybe like eminent
+    mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.filter.noempty, mytaglist.buttons)
 
     -- Create a tasklist widget
     mytasklist[s] = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, mytasklist.buttons)
@@ -541,7 +543,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "a", function() 
                                 revelation({rule={class="conky-semi"}, is_excluded=true}) 
                              end),
-    awful.key({            }, "F12", function () awful.util.spawn_with_shell("wacom_led_select", mouse.screen) end),
+    awful.key({            }, "F12", function () awful.util.spawn_with_shell("wacom_led_switch") end),
 
 
     awful.key({ modkey }, "`",
@@ -649,14 +651,14 @@ globalkeys = awful.util.table.join(
     --awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end),
     --awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
     awful.key({ modkey,           }, "space", 
-        function () awful.layout.inc(layouts,  1)
+        function () awful.layout.inc(1, mouse.screen, layouts)
             local layout = awful.layout.get(mouse.screen)
             local name = awful.layout.getname(layout)
             naughty.notify({text = '<span font_desc="Monaco 10">'..name..'</span>',
                             title = "current layout:", timeout=8,
                            screen=mouse.screen})
         end),
-    awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1)
+    awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(-1, mouse.screen, layouts)
             local layout = awful.layout.get(mouse.screen)
             local name = awful.layout.getname(layout)
             naughty.notify({text = '<span font_desc="Monaco 10">'..name..'</span>',
@@ -671,8 +673,9 @@ globalkeys = awful.util.table.join(
         local s = 
         awful.util.spawn_with_shell("dmenu_run -i -p 'Run command:' -nb '" .. 
                 beautiful.bg_normal .. "' -nf '" .. beautiful.fg_normal .. 
+                "' -fn Monaco-9:normal'"..
                 "' -sb '" .. beautiful.bg_focus .. 
-                "' -sf '" .. beautiful.fg_focus .. "'", mouse.screen) 
+                "' -sf '" .. beautiful.fg_focus .. "'") 
         end),
     --usefuleval, nil,
     awful.key({ modkey }, "x",
@@ -726,7 +729,7 @@ globalkeys = awful.util.table.join(
         f:close()
 	--frame=naughty.notify({ text = fc, 
             --timeout = 30, width = 400})
-        frame=naughty.notify({ text = '<span font_desc="Sans 8" color="white">'..fc..'</span>', 
+        frame=naughty.notify({ text = '<span font_desc="San Francisco Text 9" color="white">'..fc..'</span>', 
             timeout = 30, width = 500})
     end),
 
@@ -742,7 +745,7 @@ globalkeys = awful.util.table.join(
                 fr = fr .. line .. '\n'
 	end
 	f:close()
-	naughty.notify({ text = '<span font_desc="Sans 8">'..fr..'</span>', timeout = 30, width = 400
+	naughty.notify({ text = '<span font_desc="San Francisco Text 9">'..fr..'</span>', timeout = 30, width = 400
         })
         end,
         nil, awful.util.getdir("cache") .. "/dict") 
@@ -756,7 +759,7 @@ clientkeys = awful.util.table.join(
     awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "f",      awful.client.floating.toggle),
-    awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
+    awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster(mouse.screen)) end),
     awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end),
     awful.key({ modkey,           }, "n",
@@ -901,12 +904,12 @@ keychains.add({modkey, "Shift"},"u","Utils", "",{
             info    =   "Restart conky"
         },
 
-        w = {
-            func = function()
-                yawn.show(18)
-            end,
-            info = "Weather"
-        },
+        --w = {
+            --func = function()
+                --yawn.show(18)
+            --end,
+            --info = "Weather"
+        --},
     })
 
 keychains.add({modkey, }, "z", "Switch to Tag", "", {
@@ -984,6 +987,19 @@ keychains.add({modkey, }, "z", "Switch to Tag", "", {
 --no need because that the keychinas.init will do it
 --root.keys(globalkeys)
 -- }}}
+
+
+--keychains.add({modkey, },"\\","Treesome", "",{
+        --s   =   {
+            --func    =  function () treesome.vertical() end,
+            --info    =   "vertical split"
+        --},
+
+        --v = {
+            --func    =   treesome.horizontal,
+            --info    =   "horizontal split"
+        --},
+    --})
 
 keychains.start(15)
 
@@ -1336,6 +1352,7 @@ awful.util.spawn_with_shell("/home/dccf87/bin/setcolor")
 -- replaced by systemd
 run_once("fcitx")
 run_once("clipit")
+run_once("synapse")
 
 -- }}}
 
@@ -1398,21 +1415,58 @@ function scandir(directory, filter)
     end
     return t
 end
+
+math.randomseed(os.time())
+
+local function shuffleTable(t)
+    local rand = math.random 
+    assert( t, "shuffleTable() expected a table, got nil" )
+    local iterations = #t
+    local j
+    
+    for i = iterations, 2, -1 do
+        j = rand(i)
+        t[i], t[j] = t[j], t[i]
+    end
+end
+
+function file_exists(name)
+   local f=io.open(name,"r")
+   if f~=nil then 
+       io.close(f) 
+       return true 
+   else 
+       return false 
+   end
+end
+
 homedir = os.getenv("HOME")
 wp_index = {}
-wp_timeout  = 3600
+wp_timeout  = 600
 wp_path = homedir.."/.config/wallpapers/"
 wp_filter = function(s) return string.match(s,"%.png$") or string.match(s,"%.jpg$") end
 wp_files = scandir(wp_path, wp_filter)
+
+shuffleTable(wp_files)
  
 -- setup the timer
 local wp_timer = timer { timeout = wp_timeout }
 wp_timer:connect_signal("timeout", function()
  
   -- set wallpaper to current index for all screens
+  if not next(wp_files) then
+    wp_files = scandir(wp_path, wp_filter)
+    shuffleTable(wp_files)
+  end
+
   for s = 1, screen.count() do
-     wp_index[s] = math.random( 1, #wp_files)
-    gears.wallpaper.maximized(wp_path .. wp_files[wp_index[s]], s)
+     --wp_index[s] = math.random(1, #wp_files)
+     while not file_exists(wp_path .. wp_files[1]) do
+        table.remove(wp_files, 1)
+     end
+
+     gears.wallpaper.maximized(wp_path .. wp_files[1], s)
+     table.remove(wp_files, 1)
   end
 
 end)
