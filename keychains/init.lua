@@ -12,7 +12,7 @@ local type      =   type
 local awful     =   require("awful")
 local root      =   root
 local naughty   =   require("naughty")
-local capi      =   { timer = timer }
+local capi      =   { timer = require("gears.timer") }
 local mouse     = mouse
 
 --module("keychains")
