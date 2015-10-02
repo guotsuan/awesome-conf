@@ -267,7 +267,7 @@ mypomo_widget:set_bgimage(beautiful.widget_bg)
 mypomo_tooltip = awful.tooltip({objects = {mypomo_widget}})
 mypomo_tooltip:set_text('Stopped')
 
-local pomodoro_image_path = awful.util.getdir("config") .. "icons/pomodoro_icon.png"
+local pomodoro_image_path = awful.util.getdir("config") .. "/icons/pomodoro_icon.png"
 
 mypomo_img = wibox.widget.imagebox()
 mypomo_img:set_image(pomodoro_image_path)
@@ -288,7 +288,7 @@ for k, t in pairs(mails) do
 end
 
 -- Create Weather widget
---yawn = lain.widgets.yawn(685783)
+yawn = lain.widgets.weather({city_id = 2852458})
 
  --Alsa volume--{{{
 ---- my volume widget
@@ -650,14 +650,14 @@ globalkeys = awful.util.table.join(
     --
     --awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end),
     --awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
-    awful.key({ modkey,           }, "space", 
-        function () awful.layout.inc(1, mouse.screen, layouts)
-            local layout = awful.layout.get(mouse.screen)
-            local name = awful.layout.getname(layout)
-            naughty.notify({text = '<span font_desc="Monaco 10">'..name..'</span>',
-                            title = "current layout:", timeout=8,
-                           screen=mouse.screen})
-        end),
+    --awful.key({ modkey,           }, "space", 
+        --function () awful.layout.inc(1, mouse.screen, layouts)
+            --local layout = awful.layout.get(mouse.screen)
+            --local name = awful.layout.getname(layout)
+            --naughty.notify({text = '<span font_desc="Monaco 10">'..name..'</span>',
+                            --title = "current layout:", timeout=8,
+                           --screen=mouse.screen})
+        --end),
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(-1, mouse.screen, layouts)
             local layout = awful.layout.get(mouse.screen)
             local name = awful.layout.getname(layout)
@@ -896,7 +896,7 @@ keychains.add({modkey, "Shift"},"p","Pomodoro", "/home/dccf87/.config/awesome/po
         },
     })
 
-keychains.add({modkey, "Shift"},"u","Utils", "",{
+keychains.add({modkey, "Shift"},"u","Utils", "/usr/share/icons/hicolor/16x16/apps/blender.png",{
         c   =   {
             func    =   function()
                 awful.util.spawn_with_shell("restart_conky.sh &")
@@ -904,15 +904,15 @@ keychains.add({modkey, "Shift"},"u","Utils", "",{
             info    =   "Restart conky"
         },
 
-        --w = {
-            --func = function()
-                --yawn.show(18)
-            --end,
-            --info = "Weather"
-        --},
+        w = {
+            func = function()
+                yawn.show(18)
+            end,
+            info = "Weather"
+        },
     })
 
-keychains.add({modkey, }, "z", "Switch to Tag", "", {
+keychains.add({modkey, }, "z", "Switch to Tag", "/usr/share/icons/hicolor/16x16/apps/blender.png", {
     q   =   {
         func    =   function()
             awful.screen.focus_relative(1)
@@ -988,20 +988,52 @@ keychains.add({modkey, }, "z", "Switch to Tag", "", {
 --root.keys(globalkeys)
 -- }}}
 
+local function layout_key_table()
+    local key_table = {}
+    local sub_layouts = {
+    awful.layout.suit.floating,
+    awful.layout.suit.tile,
+    awful.layout.suit.fair,
+    awful.layout.suit.magnifier,
+    lain.layout.termfair,
+    lain.layout.centerfair,
+    awful.layout.suit.max,
+    awful.layout.suit.max.fullscreen,
+    treesome}
+    for i,_ in ipairs(sub_layouts) do
 
---keychains.add({modkey, },"\\","Treesome", "",{
-        --s   =   {
-            --func    =  function () treesome.vertical() end,
-            --info    =   "vertical split"
-        --},
+        local name = awful.layout.getname(sub_layouts[i])
+        key_table[tostring(i)] = { func = function () awful.layout.set(sub_layouts[i]) end,
+                        info = 'Change layout to '..name}
+    end
+    return key_table
+end
 
-        --v = {
-            --func    =   treesome.horizontal,
-            --info    =   "horizontal split"
-        --},
-    --})
+keychains.add({modkey, },"space","Change layout", "/usr/share/icons/hicolor/16x16/apps/blender.png", layout_key_table())
+
+
+keychains.add({modkey, },"\\","Treesome", "/usr/share/icons/hicolor/16x16/apps/blender.png",{
+        s   =   {
+            func    =  treesome.horizontal,
+            info    =   "split by vertical line (|) "
+        },
+
+        v = {
+            func    =   treesome.vertical,
+            info    =   "split by horizonal line (-)"
+        },
+    })
 
 keychains.start(15)
+
+local function focus_or_not(c)
+
+    if awful.tag.selected(mouse.scree).name == "awesome" then
+        return false
+    else
+        return awful.client.focus.filter(c) 
+    end
+end
 
 -- {{{ Rules
 --
@@ -1015,12 +1047,13 @@ keychains.start(15)
             --end
 awful.rules.rules = {
     -- All clients will match this rule.
+      --properties = { border_width = beautiful.border_width,
     { rule = { },
-      properties = { border_width = beautiful.border_width,
+      properties = { border_width = beautiful.border_width ,
                      border_color = beautiful.border_normal,
-                     focus = awful.client.focus.filter,
+                     focus = false,
                      keys = clientkeys,
-                     buttons = clientbuttons },
+                     buttons = clientbuttons }
         },
     { rule = { class = "MPlayer" },
       properties = { floating = true } },
@@ -1131,9 +1164,9 @@ client.connect_signal("manage", function (c, startup)
         end
     end)
 
-    --c:connect_signal("mouse::leave", function(c)
-        --c.focus = false
-    --end)
+    c:connect_signal("mouse::leave", function(c)
+        c.focus = false
+    end)
 
     if awful.layout.get(c.screen) == awful.layout.suit.floating then
         awful.client.floating.set(c, true)
@@ -1145,6 +1178,8 @@ client.connect_signal("manage", function (c, startup)
          awful.client.setslave(c)
 
         -- Put windows in a smart way, only if they does not set an initial position.
+        --awful.placement.no_overlap(c)
+        --awful.placement.no_offscreen(c)
         if not c.size_hints.user_position and not c.size_hints.program_position then
             awful.placement.no_overlap(c)
             awful.placement.no_offscreen(c)
@@ -1400,88 +1435,24 @@ function usefuleval(s)--{{{
         end
 end--}}}
 
--- scan directory, and optionally filter outputs
-function scandir(directory, filter)
-    local i, t, popen = 0, {}, io.popen
-    if not filter then
-        filter = function(s) return true end
-    end
-    print(filter)
-    for filename in popen('ls -a "'..directory..'"'):lines() do
-        if filter(filename) then
-            i = i + 1
-            t[i] = filename
-        end
-    end
-    return t
-end
-
-math.randomseed(os.time())
-
-local function shuffleTable(t)
-    local rand = math.random 
-    assert( t, "shuffleTable() expected a table, got nil" )
-    local iterations = #t
-    local j
-    
-    for i = iterations, 2, -1 do
-        j = rand(i)
-        t[i], t[j] = t[j], t[i]
-    end
-end
-
-function file_exists(name)
-   local f=io.open(name,"r")
-   if f~=nil then 
-       io.close(f) 
-       return true 
-   else 
-       return false 
-   end
-end
+-- {{{ Roatating wallpapers
+local wrotator = require("wrotator")
 
 homedir = os.getenv("HOME")
-wp_index = {}
 wp_timeout  = 600
 wp_path = homedir.."/.config/wallpapers/"
 wp_filter = function(s) return string.match(s,"%.png$") or string.match(s,"%.jpg$") end
-wp_files = scandir(wp_path, wp_filter)
 
-shuffleTable(wp_files)
- 
--- setup the timer
-local wp_timer = timer { timeout = wp_timeout }
-wp_timer:connect_signal("timeout", function()
- 
-  -- set wallpaper to current index for all screens
-  if not next(wp_files) then
-    wp_files = scandir(wp_path, wp_filter)
-    shuffleTable(wp_files)
-  end
+wrotator({path=wp_path, filter=wp_filter, timeout = wp_timeout})
 
-  for s = 1, screen.count() do
-     --wp_index[s] = math.random(1, #wp_files)
-     while not file_exists(wp_path .. wp_files[1]) do
-        table.remove(wp_files, 1)
-     end
-
-     gears.wallpaper.maximized(wp_path .. wp_files[1], s)
-     table.remove(wp_files, 1)
-  end
-
-end)
- 
--- initial start when rc.lua is first run
---wp_timer:start()
-
-if wp_timer.started then
-  wp_timer:stop()
+if wrotator.wp_timer.started then
+  wrotator.wp_timer:stop()
 else
-  wp_timer:start()
+  wrotator.wp_timer:start()
 end
 
+ 
 -- }}}
---os.execute("feh --bg-fill -z -r ~/.config/wallpapers &")
 
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
