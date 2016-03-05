@@ -56,25 +56,6 @@ function debuginfo( message )
     end
 end
 
---{{{ current not used
---local lognotify=require("lognotify")
---local dmenu=require("dmenu")
---require("aweror")
---require("shifty")
-
---local lognotify=require("lognotify")
---ilog = lognotify{
-    --logs = { pacman = { file = "/var/log/pacman.log"},
-    ---- Check, whether you have the permissions to read your log files!
-    ---- You can fix this by configure syslog deamon in many case.
-    --syslog = { file = "/var/log/dmesg.log", ignore = { "Changing fan level" }}
-    --},
-   ---- Delay between checking in seconds. Default: 1
-   --interval = 1,
-   ---- Time in seconds after which popup expires. Set 0 for no timeout. Default: 0
-   --naughty_timeout = 25
---}
---}}}
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -784,7 +765,7 @@ globalkeys = awful.util.table.join(
         end,
         nil, awful.util.getdir("cache") .. "/dict") 
       end),
-    awful.key({modkey, "Shift"}, "t", clip_translate )
+    awful.key({modkey, "Shift"}, "t", clip_translate)
 )
 
 -- obsolete
