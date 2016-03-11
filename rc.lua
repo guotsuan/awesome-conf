@@ -13,7 +13,7 @@ require("awful.autofocus")
 -- Widget and layout library
 local wibox = require("wibox")
 local lain = require("lain")
-local treesome = require("treesome")
+local treetile = require("treetile")
 
 -- Theme handling library
 local beautiful = require("beautiful")
@@ -98,7 +98,7 @@ theme.layout_cascade     = theme.lain_icons .. "cascade.png"
 theme.layout_cascadetile = theme.lain_icons .. "cascadebrowse.png"
 theme.layout_centerwork  = theme.lain_icons .. "centerwork.png"
 theme.layout_centerfair  = theme.lain_icons .. "centerfair.png"
-theme.layout_treesome = os.getenv("HOME") .. "/.config/awesome/treesome/layout_icon.png"
+theme.layout_treetile = os.getenv("HOME") .. "/.config/awesome/treetile/layout_icon.png"
 theme.awful_widget_height           = 18
 theme.awful_widget_margin_top       = 2
 theme.tasklist_disable_icon         = false
@@ -155,7 +155,7 @@ local layouts = {
     awful.layout.suit.spiral.dwindle,
     awful.layout.suit.max,
     awful.layout.suit.max.fullscreen,
-    treesome,
+    treetile,
 }
 --}}}
 
@@ -609,17 +609,44 @@ globalkeys = awful.util.table.join(
 
     -- Layout manipulation
     -- client move and resize
-    awful.key({ modkey, "Shift"   }, "j", function () awful.client.moveresize(0,-20,0,0)    end),
-    awful.key({ modkey, "Shift"   }, "k", function () awful.client.moveresize(0, 20,0,0)    end),
-    awful.key({ modkey, "Shift"   }, "h", function () awful.client.moveresize(-20,0,0,0) end),
-    awful.key({ modkey, "Shift"   }, "l", function () awful.client.moveresize(20,0,0,0)    end),
+    awful.key({ modkey, "Shift"   }, "j", function () 
+            local c = client.focus
+            if awful.layout.get(c.screen).name ~= "treetile" then
+                awful.client.moveresize(0,-20,0,0)
+            end 
+        end),
+    awful.key({ modkey, "Shift"   }, "k", function () 
+            local c = client.focus
+            if awful.layout.get(c.screen).name ~= "treetile" then
+                awful.client.moveresize(0, 20,0,0)  
+            end 
+        end),
 
+    --awful.key({ modkey, "Shift"   }, "h", function () awful.client.moveresize(-20,0,0,0) end),
+    --awful.key({ modkey, "Shift"   }, "l", function () awful.client.moveresize(20,0,0,0)    end),
+    awful.key({ modkey, "Shift"   }, "h", function ()
+            local c = client.focus
+            if awful.layout.get(c.screen).name ~= "treetile" then
+                awful.client.moveresize(-20,0,0,0) 
+            else
+                treetile.resize_client(-0.1)
+            end 
+            end),   
+    awful.key({ modkey, "Shift"   }, "l", function () 
+            local c = client.focus
+            if awful.layout.get(c.screen).name ~= "treetile" then
+                awful.client.moveresize(20,0,0,0) 
+            else
+                treetile.resize_client(0.1)
+            end 
+            end),
     awful.key({modkey,}, "s", function ()  spawn_with_shell("dmenu_apps.sh") end ),
+    awful.key({modkey, "Shift"}, "s", function() awful.client.swap.bydirection('left') end),
 
 
     awful.key({ modkey, "Control"   }, "h", function ()
         local llayout=awful.layout.get(mouse.screen)
-        if llayout  == layouts[1] then
+        if llayout  == layouts[2] then
             awful.client.moveresize(0,0,-20,0) 
         else
             awful.tag.incmwfact(-0.1)
@@ -627,7 +654,7 @@ globalkeys = awful.util.table.join(
        end),
     awful.key({ modkey, "Control"   }, "l", function () 
      local llayout  = awful.layout.get(mouse.screen)
-     if llayout == layouts[1] then
+     if llayout == layouts[2] then
          awful.client.moveresize(0,0,20,0)  
         else
             awful.tag.incmwfact(0.1)
@@ -637,6 +664,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control"   }, "k", function () awful.client.moveresize(0,0,0,-20)    end),
     -- no two screen yet  --gq
     --  no I have two screen
+    --
     awful.key({ modkey,  }, "[", function() awful.screen.focus_relative(-1)
                                end),
     awful.key({ modkey,  }, "]", function() awful.screen.focus_relative(1) end),
@@ -1031,7 +1059,7 @@ local function layout_key_table()
     lain.layout.centerfair,
     awful.layout.suit.max,
     awful.layout.suit.max.fullscreen,
-    treesome}
+    treetile}
     for i,_ in ipairs(sub_layouts) do
 
         local name = awful.layout.getname(sub_layouts[i])
@@ -1044,14 +1072,14 @@ end
 keychains.add({modkey, },"space","Change layout", "/usr/share/icons/hicolor/16x16/apps/blender.png", layout_key_table())
 
 
-keychains.add({modkey, },"\\","Treesome", "/usr/share/icons/hicolor/16x16/apps/blender.png",{
+keychains.add({modkey, },"\\","treetile", "/usr/share/icons/hicolor/16x16/apps/blender.png",{
         s   =   {
-            func    =  treesome.horizontal,
+            func    =  treetile.horizontal,
             info    =   "split by vertical line (|) "
         },
 
         v = {
-            func    =   treesome.vertical,
+            func    =   treetile.vertical,
             info    =   "split by horizonal line (-)"
         },
     })
@@ -1074,7 +1102,7 @@ awful.rules.rules = {
                      focus = awful.client.focus.filter,
                      --focus = false
                      --focus = function (c) 
-                         --if awful.layout.get(c.screen).name == "treesome" then
+                         --if awful.layout.get(c.screen).name == "treetile" then
                              --return false
                          --else
                             --return awful.client.focus.filter(c)
@@ -1207,7 +1235,7 @@ client.connect_signal("manage", function (c, startup)
     if not startup  then
         -- Set the windows at the slave,
         -- i.e. put it at the end of others instead of setting it master.
-         if awful.layout.get(c.screen).name ~= "treesome" then
+         if awful.layout.get(c.screen).name ~= "treetile" then
              awful.client.setslave(c)
          end
 
@@ -1395,7 +1423,7 @@ end
 --}}}
 
  --{{{Auto Spawn
-spawn_with_shell("/home/dccf87/.scripts/get_dbus.sh")
+--spawn_with_shell("/home/dccf87/.scripts/get_dbus.sh")
 spawn_with_shell("/home/dccf87/bin/setcolor")
 
 -- replaced by systemd
