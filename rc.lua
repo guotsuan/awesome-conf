@@ -234,11 +234,9 @@ mytextclock = awful.widget.textclock("%a %b %d, %H:%M ")
 --mytextclock = awful.widget.textclock()
 
 -- Create orglendar
-local orglendar = require('orglendar')
-orglendar.files = {"/home/dccf87/org/work.org",
-                   "/home/dccf87/org/home.org"}
-orglendar.calendar_width = 19
-orglendar.register(mytextclock)
+-- switch lain calendar
+lain.widgets.calendar:attach(mytextclock, {followmouse = true})
+lain.widgets.contrib.task:attach(mytextclock, {followmouse = true})
 
 -- creat pomodoro widget
 
@@ -300,9 +298,8 @@ vol = wibox.widget.textbox()
 mc12 = wibox.widget.textbox()
 
 --mc12_card = "-c 4"
---mc12_card = awful.spawn.pread("aplay -l | grep -i MC12 | cut -f 1 -d:")
---debuginfo(mc12_card)
-mc12_card = "-c 4"
+mc12_card = awful.spawn.pread("aplay -l | grep -i MC12 | cut -f 1 -d: | grep -Eo '[0-9]'")
+mc12_card = "-c "..string.sub(mc12_card, 1,1)
 
 alsacards = {main = {wibox = vol,
                     mixer = "xterm -e alsamixer",
@@ -312,7 +309,7 @@ alsacards = {main = {wibox = vol,
                      step = "5%" },
          mc12 = {  wibox  = mc12,
                     header = 'MC12:',
-                    mixer = "xterm -e alsamixer -c 4",
+                    mixer = "xterm -e alsamixer "..mc12_card,
                      card = mc12_card,
                   channel = "PCM",
                      step = "5%" }}

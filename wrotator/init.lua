@@ -76,28 +76,27 @@ function wrotator.run (arg)
 
     wrotator.wp_timer:connect_signal("timeout", function()
      
-      -- set wallpaper to current index for all screens
-    if not next(wp_files) then
-        wp_files = scandir(wp_path, filter)
-        shuffleTable(wp_files)
-    end
+          -- set wallpaper to current index for all screens
 
-    for s = 1, screen.count() do
-        while not file_exists(wp_path .. wp_files[1]) do
+        for s = 1, screen.count() do
+            while not file_exists(wp_path .. wp_files[1]) do
+                table.remove(wp_files, 1)
+
+                if not next(wp_files) then
+                    wp_files = scandir(wp_path, filter)
+                    shuffleTable(wp_files)
+                end
+            end
+
+            gears.wallpaper.maximized(wp_path .. wp_files[1], s)
             table.remove(wp_files, 1)
+
+            if not next(wp_files) then
+                wp_files = scandir(wp_path, filter)
+                shuffleTable(wp_files)
+            end
         end
 
-         gears.wallpaper.maximized(wp_path .. wp_files[1], s)
-         table.remove(wp_files, 1)
-    end
-
-    --wp_timer 
-
-    --if wp_timer.started then
-      --wp_timer:stop()
-    --else
-      --wp_timer:start()
-    --end
 
     end)
 
