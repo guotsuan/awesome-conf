@@ -36,6 +36,8 @@ local revelation=require("revelation")
 local drop = require("scratchdrop")
 local capi = { tag = tag}
 
+local hotkeys_popup = require("awful.hotkeys_popup").widget
+
 function clip_translate()
     local clip = nil
     clip = awful.util.pread("xclip -o")
@@ -55,6 +57,8 @@ function debuginfo( message )
         nid = naughty.notify({ text = tostring(message), timeout = 10 })
     end
 end
+
+
 
 
 -- {{{ Error handling
@@ -189,6 +193,7 @@ end
 -- {{{ Menu
 -- Create a laucher widget and a main menu
 myawesomemenu = {
+   {"hotkeys", function() return false, hotkeys_popup.show_help end},
    { "manual", terminal .. " -x man awesome &" },
    { "edit config", "gvim".. " " .. awful.util.getdir("config") .. "/rc.lua" },
    { "restart", awesome.restart },
@@ -277,9 +282,9 @@ mypomo_img:set_resize (true)
 
 -- Create Mail updater
 mailconf = '/home/dccf87/.config/mail_servers.conf'
+  --Icloud = {id = 'Icloud', file='/home/dccf87/.munread', cnt=0},
 local mails = { Gmail = {id = 'Gmail', file='/home/dccf87/.gunread', cnt=0},
           Durham = {id = 'Durham', file='/home/dccf87/.dunread', cnt=0},
-          Icloud = {id = 'Icloud', file='/home/dccf87/.munread', cnt=0},
           AIP = {id = 'AIP', file='/home/dccf87/.aunread', cnt=0}}
 
 local mailhoover = require("mailhoover")
@@ -346,6 +351,7 @@ function update_volume(widget, header)
     local status = fd:read("*all")
     fd:close()
  
+    --debuginfo(status)
    local volume = string.match(status, "(%d?%d?%d)%%")
    volume_num = string.format("% 3d", volume)
  
@@ -383,8 +389,12 @@ mytaglist = {}
 mytasklist = {}
 
 taglist_buttons = awful.util.table.join(
-                    awful.button({ }, 1, awful.tag.viewonly),
-                    awful.button({ modkey }, 1, awful.client.movetotag),
+                    awful.button({ }, 1, function (t) t:view_only() end),
+                    awful.button({ modkey }, 1, function (t) 
+                                            if client.focus then
+                                                client.focus:move_to_tag(t)
+                                            end
+                                        end),
                     awful.button({ }, 3, awful.tag.viewtoggle),
                     awful.button({ modkey }, 3, awful.client.toggletag),
                     awful.button({ }, 4, function(t) awful.tag.viewnext(awful.tag.getscreen(t)) end),
@@ -399,7 +409,7 @@ tasklist_buttons = awful.util.table.join(
                                                   -- :isvisible() makes no sense
                                                   c.minimized = false
                                                   if not c:isvisible() then
-                                                      awful.tag.viewonly(c:tags()[1])
+                                                      c:tags()[1]:view_only()
                                                   end
                                                   -- This will also un-minimize
                                                   -- the client, if needed
@@ -469,7 +479,9 @@ for s = 1, 2 do
     end
 
     if s == 2 then
-        right_layout:add(mails.Icloud.wibox)
+        --if type(mails[Icloud]) ~= nil then
+            --right_layout:add(mails.Icloud.wibox)
+        --end
         right_layout:add(mails.AIP.wibox)
     end
 
@@ -801,7 +813,7 @@ clientkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "f",      awful.client.floating.toggle),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster(mouse.screen)) end),
-    awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
+    awful.key({ modkey,           }, "o",      function (c) c:move_to_screen() end                        ),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end),
     awful.key({ modkey,           }, "n",
         function (c)
@@ -827,42 +839,52 @@ end
 -- This should map on the top row of your keyboard, usually 1 to 9.
 for i = 1, 9 do
     globalkeys = awful.util.table.join(globalkeys,
+        -- View tag only
         awful.key({ modkey }, "#" .. i + 9,
                   function ()
-                        local screen = mouse.screen
-                        local tag = awful.tag.gettags(screen)[i]
+                        local screen = awful.screen.focused()
+                        local tag = screen.tags[i]
 
                         if tag then
-                            awful.tag.viewonly(tags[screen][i])
+                            tag:view_only()
                         end
-                  end),
-
+                    end,
+                    {description = "view tag #"..i, group = "tag"}),
+        -- Toggle tag.
         awful.key({ modkey, "Control" }, "#" .. i + 9,
                   function ()
-                      local screen = mouse.screen
-                      local tag = awful.tag.gettags(screen)[i]
+                      local screen = awful.screen.focused()
+                      local tag = screen.tags[i]
                       if tag then
                          awful.tag.viewtoggle(tag)
                       end
-                  end),
+                  end,
+                  {description = "toggle tag #" .. i, group = "tag"}),
+        -- Move client to tag.
         awful.key({ modkey, "Shift" }, "#" .. i + 9,
                   function ()
-                      local tag = awful.tag.gettags(client.focus.screen)[i]
-                      if tag then
-                          awful.client.movetotag(tag)
-                      end
-                  end),
+                      if client.focus then
+                          local tag = client.focus.screen.tags[i]
+                          if tag then
+                              client.focus:move_to_tag(tag)
+                          end
+                     end
+                  end,
+                  {description = "move focused client to tag #"..i, group = "tag"}),
+        -- Toggle tag on focused client.
         awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
                   function ()
                       if client.focus then
-                          local tag = awful.tag.gettags(client.focus.screen)[i]
+                          local tag = client.focus.screen.tags[i]
                           if tag then
-                              awful.client.toggletag(tag)
+                              client.focus:toggle_tag(tag)
                           end
                       end
-                  end))
-
+                  end,
+                  {description = "toggle focused client on tag #" .. i, group = "tag"})
+    )
 end
+
 
 clientbuttons = awful.util.table.join(
     awful.button({ }, 1, function (c) client.focus = c; c.opacity=1; c:raise(); end),
@@ -975,7 +997,7 @@ keychains.add({modkey, }, "z", "Switch to Tag", "/usr/share/icons/hicolor/16x16/
     q   =   {
         func    =   function()
             awful.screen.focus_relative(1)
-            awful.tag.viewonly(tags[mouse.screen][1])
+            tags[mouse.screen][1]:view_only()
         end,
         info    =   "Next screen tag - 1"
     },
@@ -983,7 +1005,7 @@ keychains.add({modkey, }, "z", "Switch to Tag", "/usr/share/icons/hicolor/16x16/
     w   =   {
         func    =   function()
             awful.screen.focus_relative(1)
-            awful.tag.viewonly(tags[mouse.screen][2])
+            tags[mouse.screen][2]:view_only()
         end,
         info    =   "Next screen tag - 2"
     },
@@ -1136,8 +1158,8 @@ awful.rules.rules = {
      { rule = { class = "Firefox" },
        properties = {maximized_horizontal=false,maximized_vertical=false,floating=true},
        callback= function(c) awful.screen.focus(mouse.screen)
-           awful.client.movetotag(tags[mouse.screen][9],c) 
-            awful.tag.viewonly(tags[mouse.screen][9])
+           c:move_to_tag(tags[mouse.screen][9]) 
+            tags[mouse.screen][9]:view_only()
        end},
 
      { rule = { name = "Figure" },
@@ -1168,12 +1190,12 @@ awful.rules.rules = {
         --callback=function(c) add_titlebar(c) end},
     { rule = { type = "dialog"}, properties={border_width = 0}},
 
-    { rule = { class = "VirtualBox" },properties={}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
-      end},
-    { rule = { name = "Windows7" },properties={maximized_horizontal=true,maximized_vertical=true}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
-      end},
-    { rule = { name = "Windows8" },properties={maximized_horizontal=true,maximized_vertical=true},callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
-      end},
+    --{ rule = { class = "VirtualBox" },properties={}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
+      --end},
+    --{ rule = { name = "Windows7" },properties={maximized_horizontal=true,maximized_vertical=true}, callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
+      --end},
+    --{ rule = { name = "Windows8" },properties={maximized_horizontal=true,maximized_vertical=true},callback=function(c) awful.client.movetotag(tags[mouse.screen][8],c)
+      --end},
      { rule = { class = "Tilda" },
        properties = {maximized_horizontal=false,maximized_vertical=false,floating=true},
     },
@@ -1219,10 +1241,6 @@ client.connect_signal("manage", function (c, startup)
             and awful.client.focus.filter(c) then
             client.focus = c
         end
-    end)
-
-    c:connect_signal("mouse::leave", function(c)
-        c.focus = false
     end)
 
     if awful.layout.get(c.screen) == awful.layout.suit.floating then
