@@ -43,6 +43,10 @@ local scratchdrop = {} -- module scratch.drop
 
 local dropdown = {}
 
+local function get_screen(s)
+    return s and capi.screen[s]
+end
+
 -- register X11 property for scratchtop clients
 awesome.register_xproperty("AWESOME_SCRATCHDROP_VERT", "string")
 awesome.register_xproperty("AWESOME_SCRATCHDROP_HORIZ", "string")
@@ -58,8 +62,8 @@ function set_scratchdrop_properties(c, vert, horiz, width, height, sticky, scree
    c.floating = true
 
     -- Client geometry and placement
-    local screengeom = screen.workarea
-    local screen_num = screen.index
+    local screengeom = get_screen(screen).workarea
+    local screen_num = screen
 
     -- store values
     c:set_xproperty("AWESOME_SCRATCHDROP_VERT", vert)
@@ -67,7 +71,7 @@ function set_scratchdrop_properties(c, vert, horiz, width, height, sticky, scree
     c:set_xproperty("AWESOME_SCRATCHDROP_WIDTH", width)
     c:set_xproperty("AWESOME_SCRATCHDROP_HEIGHT", height)
     c:set_xproperty("AWESOME_SCRATCHDROP_STICKY", sticky)
-    c:set_xproperty("AWESOME_SCRATCHDROP_SCREEN", tostring(screen.index))
+    c:set_xproperty("AWESOME_SCRATCHDROP_SCREEN", tostring(screen))
     c:set_xproperty("AWESOME_SCRATCHDROP_PROG", prog)
 
     if width  <= 1 then width  = (screengeom.width  * width) - 3 end
@@ -125,7 +129,8 @@ function toggle(prog, vert, horiz, width, height, sticky, screen)
     width  = width  or 1
     height = height or 0.25
     sticky = sticky or false
-    screen = screen or capi.mouse.screen
+    screen = screen or capi.mouse.screen.index
+
 
     scratchdrop_init_prog(prog)
 
@@ -149,7 +154,7 @@ function toggle(prog, vert, horiz, width, height, sticky, screen)
 
         -- Switch the client to the current workspace
         if c:isvisible() == false then c.hidden = true
-           c:move_to_tag(screen.selected_tag)
+           c:move_to_tag(get_screen(screen).selected_tag)
         end
 
         -- Focus and raise if hidden
@@ -182,10 +187,8 @@ function scratchdrop_restore(c)
         height = tonumber(height)
         screen_num = tonumber(screen_num)
 
-        awful.screen.focus(screen_num)
-
         scratchdrop_init_prog(prog)
-        set_scratchdrop_properties(c, vert, horiz, width, height, sticky, screen, prog)
+        set_scratchdrop_properties(c, vert, horiz, width, height, sticky, screen_num, prog)
 
         dropdown[prog][screen] = c
 
